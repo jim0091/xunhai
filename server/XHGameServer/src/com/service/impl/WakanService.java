@@ -13,6 +13,7 @@ import com.cache.CacheSynDBService;
 import com.common.GameContext;
 import com.common.GameSocketService;
 import com.common.LockService;
+import com.common.RandomService;
 import com.common.ServiceCollection;
 import com.constant.CacheConstant;
 import com.constant.CacheSynConstant;
@@ -47,6 +48,7 @@ import com.service.IProtoBuilderService;
 import com.service.IRewardService;
 import com.service.IWakanService;
 import com.util.IDUtil;
+import com.util.ResourceUtil;
 import com.util.SplitStringUtil;
 
 
@@ -143,8 +145,12 @@ public class WakanService implements IWakanService {
 			ServiceCollection serviceCollection = GameContext.getInstance().getServiceCollection();		
 			GameSocketService gameSocketService = serviceCollection.getGameSocketService();
 			IProtoBuilderService protoBuilderService = serviceCollection.getProtoBuilderService();
+			IChatService chatService = serviceCollection.getChatService();
 			
-			synchronized (LockService.getPlayerLockByType(playerId, LockConstant.PLAYER_WAKAN)) {				
+			synchronized (LockService.getPlayerLockByType(playerId, LockConstant.PLAYER_WAKAN)) {	
+				Player player = serviceCollection.getPlayerService().getPlayerByID(playerId);
+				if(player == null) return;
+				
 				// 获取玩家装备位注灵信息
 				Map<Integer, PlayerWakan> map = this.getPlayerWakanMap(playerId);
 				PlayerWakan playerWakan = map.get(posId);
@@ -190,21 +196,42 @@ public class WakanService implements IWakanService {
 				
 				// 判断是否触发暴击 (相加总灵值/当前等级需要灵值）*（1+已有灵值/当前等级需要灵值）
 				double chcValue = (addValue * 1.0 / baseWakan.getNeedMana()) * (1 + playerWakan.getWakanValue() * 1.0/ baseWakan.getNeedMana()); 
-				boolean levelFlag = false;	
 				int isCrit = 0;
-				int newValue = playerWakan.getWakanValue() + addValue;			
 				if(Math.random() < chcValue){					
-					levelFlag = true;
-					isCrit = 1;
-				}else{					
-					// 根据玩家当前的等级获取升级需要的灵力值， 判断是否能升级				
-					if (newValue >= baseWakan.getNeedMana()){
-						// 注灵升级
-						levelFlag = true;								
-					}				
+					int rnum = RandomService.getRandomNum(100);
+					if(rnum < 60){
+						isCrit = 2;
+					}else if(rnum < 85){
+						isCrit = 3;
+					}else if(rnum < 95){
+						isCrit = 4;
+					}else{
+						isCrit = 5;
+					}
 				}	
 				
-				if(levelFlag){	
+				if(isCrit > 0){
+					addValue = addValue * isCrit;
+					//恭喜您注灵暴击触发XXX%灵力值
+					serviceCollection.getCommonService().sendNoticeMsg(playerId, ResourceUtil.getValue("wakan_1", isCrit*100));
+					
+					//恭喜XX注灵暴击触发XXX%灵力值
+					List<Notice> paramList = new ArrayList<Notice>();						
+					Notice notice1 = new Notice(ParamType.PLAYER, playerId, 0, player.getPlayerName());
+					Notice notice2 = new Notice(ParamType.PARAM, 0, 0, String.valueOf(isCrit*100));
+					
+					paramList.add(notice1);
+					paramList.add(notice2);
+					chatService.synNotice(ChatConstant.CHAT_NOTICE_MAG_61, paramList, gameSocketService.getOnLinePlayerIDList());
+					
+					isCrit = 1;
+				}
+				
+				
+				int newValue = playerWakan.getWakanValue() + addValue;
+				
+				// 注灵升级
+				if(newValue >= baseWakan.getNeedMana()){	
 					playerWakan.setWakanLevel(playerWakan.getWakanLevel() + 1);	
 					playerWakan.setWakanValue(0);
 					
@@ -222,8 +249,7 @@ public class WakanService implements IWakanService {
 					// 达到18级, 广播
 					int TAKE_WAKAN_NOTICE_LEVEL = serviceCollection.getCommonService().getConfigValue(ConfigConstant.TAKE_WAKAN_NOTICE_LEVEL);
 					if(playerWakan.getWakanLevel() >= TAKE_WAKAN_NOTICE_LEVEL){			
-						IChatService chatService = serviceCollection.getChatService();
-						Player player = serviceCollection.getPlayerService().getPlayerByID(playerWakan.getPlayerId());
+					
 						Map<Integer, String> basePosIdMap = (Map<Integer, String>)BaseCacheService.getFromBaseCache(CacheConstant.BASE_POS_ID);
 						List<Notice> paramList = new ArrayList<Notice>();						
 						Notice notice1 = new Notice(ParamType.PLAYER, playerWakan.getPlayerId(), 0, player.getPlayerName());
@@ -248,14 +274,14 @@ public class WakanService implements IWakanService {
 				List<Integer> conditionList = new ArrayList<Integer>();				
 				conditionList.add(playerWakan.getPosId());
 				conditionList.add(playerWakan.getWakanLevel());
-				GameContext.getInstance().getServiceCollection().getTaskService().executeTask(playerWakan.getPlayerId(), TaskConstant.TYPE_6, conditionList);
+				serviceCollection.getTaskService().executeTask(playerWakan.getPlayerId(), TaskConstant.TYPE_6, conditionList);
 	
 				S_TakeWakan.Builder builder = S_TakeWakan.newBuilder();			
 				WakanMsg.Builder wakanMsg = protoBuilderService.buildWakanMsg(playerWakan);	
 				builder.setIsCrit(isCrit);
 				builder.setWakanMsg(wakanMsg);		
 				MessageObj msg = new MessageObj(MessageID.S_TakeWakan_VALUE, builder.build().toByteArray());
-				gameSocketService.sendDataToPlayerByPlayerId(playerId, msg);	
+				gameSocketService.sendDataToPlayerByUserId(player.getUserId(), msg);	
 			}
 		}
 		

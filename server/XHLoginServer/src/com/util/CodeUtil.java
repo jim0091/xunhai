@@ -109,7 +109,7 @@ public class CodeUtil {
 		
 		List<GameEntity> objList = new ArrayList<GameEntity>();
 		for (int i=1;i<=num;i++) {
-			ActCode actCode = buildCode("juliang", 20, 2109, 1, getRandomChar());
+			ActCode actCode = buildCode("qlj", 20, 2111, 1, getRandomChar());
 			objList.add(actCode);
 		}
 		

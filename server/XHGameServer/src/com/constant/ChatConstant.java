@@ -158,4 +158,6 @@ public class ChatConstant {
 	public static final int CHAT_NOTICE_MAG_59 = 59;
 	/** 【{0}】都护府在都护府领地召唤出强大的BOSS{1}*/
 	public static final int CHAT_NOTICE_MAG_60 = 60;
+	/** 恭喜{0}注灵暴击触发{1}%灵力值！*/
+	public static final int CHAT_NOTICE_MAG_61 = 61;
 }

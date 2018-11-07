@@ -64,6 +64,9 @@ public class LoginServlet extends BaseServlet {
 			}else if("yaya".equals(Config.AGENT)){
 				//吖呀
 				yayaLogin(req, resp);
+			}else if("aile".equals(Config.AGENT)){
+				//爱乐
+				aileLogin(req, resp);
 			}
 			
 
@@ -219,7 +222,7 @@ public class LoginServlet extends BaseServlet {
 			JSONObject resultJson = new JSONObject(js);
 			if(resultJson.getString("isSuccess") .equals("1")){
 
-				this.postData(resp, this.sucLogin(0, userName, "123456", null, 1, Integer.valueOf(appid)));
+				this.postData(resp, this.sucLogin(0, appid+"_"+userName, "123456", null, 1, Integer.valueOf(appid)));
 			}else{
 				//登录失败
 				LogUtil.error("登录失败 appid："+appid+" js："+js);
@@ -252,7 +255,7 @@ public class LoginServlet extends BaseServlet {
 			String js = HttpUtil.httpsRequest(url, param.toString(), "application/x-www-form-urlencoded");
 			if(js.equals("0")){
 				
-				this.postData(resp, this.sucLogin(0, uid, "123456", null, 1, Integer.valueOf(appid)));
+				this.postData(resp, this.sucLogin(0, appid+"_"+uid, "123456", null, 1, Integer.valueOf(appid)));
 			}else {
 				//登录失败
 				LogUtil.error("登录失败 appid："+appid+" js："+js);
@@ -302,7 +305,7 @@ public class LoginServlet extends BaseServlet {
 					this.postData(resp, result.toString());
 					return;
 				}
-				this.postData(resp, this.sucLogin(0, uname, "123456", null, 1, Integer.valueOf(appid)));
+				this.postData(resp, this.sucLogin(0, appid+"_"+uname, "123456", null, 1, Integer.valueOf(appid)));
 			}else{
 				//登录失败
 				LogUtil.error("登录失败 appid："+appid+" js："+js);
@@ -330,19 +333,23 @@ public class LoginServlet extends BaseServlet {
 			return;
 		}
 		
-		if(appid.equals("1271")){ 	//仙剑长安
+		if(appid.equals("1271") || appid.equals("1306")){ 	//仙剑长安 神都幽游录
 		
 			String sessionId = req.getParameter("token");
 			if(sessionId == null){
 				//登录失败
-				LogUtil.error("zhongfuLogin SFToken："+sessionId);
+				LogUtil.error("登录失败  appid："+appid);
 				result.put("result", 6);
 				this.postData(resp, result.toString());
 				return;
 			}
 			
-			String Login_Key = "02906a907397b816cfbf4fa5b4e6a6f7";
 			String url = "https://api.nkyouxi.com/sdkapi.php";
+			
+			String Login_Key = "02906a907397b816cfbf4fa5b4e6a6f7";
+			if(appid.equals("1306")){
+				Login_Key = "e18e8c8258d0b92dff1b6c883f08e57a";
+			}
 			
             int time = ParseNow();
             String param = String.format("ac=check&appid=%s&sdkversion=2.1.7&sessionid=%s&time=%s", appid, GetEncode(sessionId), time);
@@ -368,13 +375,14 @@ public class LoginServlet extends BaseServlet {
         		this.postData(resp, this.sucLogin(0, appid+"_"+userName, "123456", null, 1, Integer.valueOf(appid)));
         	}else{
 				//登录失败
-        		LogUtil.error("zhongfuLogin login返回错误："+js);
+        		LogUtil.error("登录失败 appid："+appid+" js："+js);
 				result.put("result", 6);
 				this.postData(resp, result.toString());
         	}
 		}else if(appid.equals("324") || appid.equals("53") 
 				|| appid.equals("106") || appid.equals("323")
-				|| appid.equals("325")){ //百转修仙  幻域修仙 仙道至尊 仙侠大劫主 修仙道主
+				|| appid.equals("325") || appid.equals("252")
+				|| appid.equals("255") || appid.equals("254")){ //百转修仙  幻域修仙 仙道至尊 仙侠大劫主 修仙道主 侣仙道 仙语双灵 御仙传说
 			
 			String uid = req.getParameter("userId");
 			String token = req.getParameter("token");
@@ -396,6 +404,12 @@ public class LoginServlet extends BaseServlet {
 				Login_Key = "7c2e95e1d6974a8aa0865a71717003af";
 			}else if(appid.equals("325")){
 				Login_Key = "9a3aeccbd52c4a7e97711d92f9be9f37";
+			}else if(appid.equals("252")){
+				Login_Key = "f1bf9deffe34432cb1d9359281912804";
+			}else if(appid.equals("255")){
+				Login_Key = "4f8e731b43e54928a5fcda3c6f1f5dc0";
+			}else if(appid.equals("254")){
+				Login_Key = "febf21a2423b4caa80ef73e2c814e852";
 			}
 			String url = "http://cfsdk2.cftdcm.com:8080/payserver/account/check_login";
 			
@@ -478,6 +492,7 @@ public class LoginServlet extends BaseServlet {
 				this.postData(resp, this.sucLogin(0, uid, "123456", null, 1, Integer.valueOf(appid)));
 			}else{
 				//登录失败
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
 				result.put("result", 6);
 				this.postData(resp, result.toString());
 			}
@@ -512,14 +527,14 @@ public class LoginServlet extends BaseServlet {
 			}else{
 				//登录失败
 				LogUtil.error("登录失败  rsCode："+rsCode+" msg:"+resultJson.getString("msg"));
-				
 				result.put("result", 6);
 				this.postData(resp, result.toString());
 			}
 		}else if(appid.equals("6327") || appid.equals("6328") 
 				|| appid.equals("6333") || appid.equals("6010")
 				|| appid.equals("6089") || appid.equals("6094")
-				|| appid.equals("6095")){ //太古封神 太古伏魔录 武动九州 仙侠幻梦录 隋唐修仙传 逍遥仙途 修仙侠隐
+				|| appid.equals("6095") || appid.equals("6059")
+				|| appid.equals("6097") || appid.equals("6060")){ //太古封神 太古伏魔录 武动九州 仙侠幻梦录 隋唐修仙传 逍遥仙途 修仙侠隐 八荒诛仙录  一剑封天 太古星辰诀
 			String uid = req.getParameter("userId");
 			String token = req.getParameter("token");
 			if(uid == null || token == null){
@@ -553,6 +568,18 @@ public class LoginServlet extends BaseServlet {
 				app_key = "ca8c3511907b7937161660d5dfdfa551";
 				
 				url = "https://api.wx903.com/api/v7/cp/user/check";
+			}else if(appid.equals("6059")){
+				app_key = "504d911f2dec15ca7155a778ba411347";
+				
+				url = "https://api.91fun.com/api/cp/user/check";
+			}else if(appid.equals("6097")){
+				app_key = "531b7325198ca6f9d1e714aeee7432bb";
+				
+				url = "https://api.wx903.com/api/v7/cp/user/check";
+			}else if(appid.equals("6060")){
+				app_key = "706363bd51e34ef431301946d5b55aac";
+				
+				url = "https://api.91fun.com/api/cp/user/check";
 			}
 			
 			StringBuilder param = new StringBuilder();
@@ -570,14 +597,14 @@ public class LoginServlet extends BaseServlet {
 				this.postData(resp, this.sucLogin(0, appid+"_"+uid, "123456", null, 1, Integer.valueOf(appid)));
 			}else{
 				//登录失败
-				LogUtil.error("登录失败  js："+js);
-				
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
 				result.put("result", 6);
 				this.postData(resp, result.toString());
 			}
 		}else if(appid.equals("10") || appid.equals("11") 
 				|| appid.equals("12") || appid.equals("13") 
-				|| appid.equals("14")){ //古剑苍穹 九州剑雨  太古仙盟 天剑侠客 天之剑
+				|| appid.equals("14") || appid.equals("19")
+				|| appid.equals("20")){ //古剑苍穹 九州剑雨  太古仙盟 天剑侠客 天之剑 九天剑侠 万古剑魂
 			String uid = req.getParameter("userId");
 			String userName = req.getParameter("userName");
 			String token = req.getParameter("token");
@@ -602,7 +629,7 @@ public class LoginServlet extends BaseServlet {
 				this.postData(resp, this.sucLogin(0, appid+"_"+userName, "123456", null, 1, Integer.valueOf(appid)));
 			}else{
 				//登录失败
-				LogUtil.error("登录失败  js："+resultJson);
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
 				
 				result.put("result", 6);
 				this.postData(resp, result.toString());
@@ -641,12 +668,193 @@ public class LoginServlet extends BaseServlet {
 				this.postData(resp, this.sucLogin(0, appid+"_"+uid, "123456", null, 1, Integer.valueOf(appid)));
 			}else{
 				//登录失败
-				LogUtil.error("登录失败  js："+resultJson);
-				
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
 				result.put("result", 6);
 				this.postData(resp, result.toString());
 			}
 			
+		}else if(appid.equals("200005")){ //大唐诛仙记
+			String uid = req.getParameter("userId");
+			String token = req.getParameter("token");
+			String time = req.getParameter("time");
+			String sessid = req.getParameter("passWord");
+			
+			if(uid == null || token == null || time == null || sessid == null){
+				//登录失败
+				LogUtil.error("登录失败  appid："+appid);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+				return;
+			}
+			String appkey = "f11ce2d516fd3f338f0ad5f3f934d0c3";
+			
+			String url = "http://lewansdk.hnyoulu.com/Api/Member/CheckLogin";
+			
+			StringBuilder param = new StringBuilder();
+			param.append("appid="+appid);
+			param.append("&uid="+uid);
+			param.append("&token="+token);
+			param.append("&time="+time);
+			param.append("&sessid="+sessid);
+			
+			String sign = MD5Service.encryptToLowerString(appid + uid + token + sessid + time + appkey);
+			param.append("&sign="+sign);
+			
+			String js = HttpUtil.sendGet(url, param.toString());
+			if(js.equals("success")){
+				
+				this.postData(resp, this.sucLogin(0, appid+"_"+uid, "123456", null, 1, Integer.valueOf(appid)));
+			}else{
+				//登录失败
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+			}
+		}else if(appid.equals("2250")){ //斗破仙剑
+			String userName = req.getParameter("userName");
+			String token = req.getParameter("token");
+			String time = req.getParameter("time");
+			
+			if(userName == null || token == null || time == null){
+				//登录失败
+				LogUtil.error("登录失败  appid："+appid);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+				return;
+			}
+			
+			JSONObject jsonObject = new JSONObject();
+			jsonObject.put("id", time);
+			jsonObject.put("appid", appid);
+			jsonObject.put("username", userName);
+			jsonObject.put("token", token);
+			
+			String url = "http://api.feituogame.com/cpVerify.php";
+			
+			String js = HttpUtil.httpsRequest(url, jsonObject.toString(), "application/json");
+			JSONObject resultJson = new JSONObject(js);
+			if(resultJson.getString("status") .equals("1")){
+
+				this.postData(resp, this.sucLogin(0, appid+"_"+userName, "123456", null, 1, Integer.valueOf(appid)));
+			}else{
+				//登录失败
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+			}
+		}else if(appid.equals("17")){ //古剑诛仙
+			String token = req.getParameter("token");
+			
+			
+			String url = "http://open.xmwan.com/v2/oauth2/access_token";
+			
+			StringBuilder param = new StringBuilder();
+			param.append("client_id=268cc53d323d41c86491df643cb732b9");
+			param.append("&client_secret=5b78597771d074a6ed7651d884a48566");
+			param.append("&grant_type=authorization_code");
+			param.append("&code="+token);
+			param.append("&refresh_token=");
+			
+			String js = HttpUtil.httpsRequest(url, param.toString(), "application/x-www-form-urlencoded");
+			JSONObject resultJson = new JSONObject(js);
+			
+			String access_token = resultJson.getString("resultJson");
+			
+			String gUrl = "http://open.xmwan.com/v2/users/me";
+			String param2 = "access_token="+access_token;
+			
+			String jsr = HttpUtil.sendGet(gUrl, param2.toString());
+			JSONObject rjsr = new JSONObject(jsr);
+			String uid = rjsr.getString("xmw_open_id");
+			
+			if(uid != null){
+				
+				this.postData(resp, this.sucLogin(0, appid+"_"+uid, "123456", null, 1, Integer.valueOf(appid)));
+			}else{
+				//登录失败
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+			}
+		}else if(appid.equals("15") || appid.equals("16")){   //凡人问道  古剑轩辕
+			String userName = req.getParameter("userName"); 
+			String token = req.getParameter("token");
+			
+			if(userName == null || "".equals(userName.trim()) 
+			   || token == null || "".equals(token.trim())){
+				//登录失败
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+				return;
+			}
+			
+			String url = "http://lll.lygames.cc/index.php";
+			
+			StringBuilder param = new StringBuilder();
+			param.append("m=index");
+			param.append("&c=user");
+			param.append("&a=Token");
+			param.append("&uid=").append(userName);
+			param.append("&token=").append(token);
+			
+			String js = HttpUtil.sendGet(url, param.toString());
+			if(js == null){
+				//登录失败
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+				return;
+			}
+			
+			JSONObject resultJson = new JSONObject(js);
+			if(resultJson.getString("isSuccess") .equals("1")){
+
+				this.postData(resp, this.sucLogin(0, appid+"_"+userName, "123456", null, 1, Integer.valueOf(appid)));
+			}else{
+				//登录失败
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+			}
+		}else if(appid.equals("18")){   //修真传说
+			String token = req.getParameter("token");
+			
+			if(token == null || "".equals(token.trim())){
+				//登录失败
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+				return;
+			}
+			
+			long time = System.currentTimeMillis();
+			String url = "http://mysdk.76ab.com/Home/User/getTokenUserMd5";
+			
+			StringBuilder param = new StringBuilder();
+			param.append("appid=01e1d0d550f723d6");
+			param.append("&time="+time);
+			
+			String code = String.format("SDKSecreate=%s&appid=%s&time=%s&token=%s&key=%s",
+					"03f36a7b67289d0f8f22bd4ac179587d","01e1d0d550f723d6", time, token, "fc8555a0a80b2630");
+			String sign = MD5Service.encryptToLowerString(code);
+			
+			param.append("&sign="+sign);
+			param.append("&token="+token);
+			
+			String js = HttpUtil.httpsRequest(url, param.toString(), "application/x-www-form-urlencoded");
+			JSONObject resultJson = new JSONObject(js);
+			
+			String type = resultJson.getString("type");
+			if( type.equals("1")){
+
+				String userName = resultJson.getString("username");
+				String phone = resultJson.getString("phone");
+				this.postData(resp, this.sucLogin(0, appid+"_"+userName, "123456", phone, 1, Integer.valueOf(appid)));
+			}else{
+				//登录失败
+				LogUtil.error("登录失败 appid："+appid+" js："+js);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+			}
 		}
 		
 	}
@@ -667,7 +875,7 @@ public class LoginServlet extends BaseServlet {
 			return;
 		}
 		
-		if(appid.equals("3")){ 	//剑霸山河
+		if(appid.equals("3") || appid.equals("4")){ 	//剑霸山河
 
 			String userName = req.getParameter("userName");
 			String token = req.getParameter("token");
@@ -694,7 +902,7 @@ public class LoginServlet extends BaseServlet {
 			String js = HttpUtil.sendGet(url, param.toString());
 			if(js.equals("0")){
 				
-				this.postData(resp, this.sucLogin(0, userName, "123456", null, 1, Integer.valueOf(appid)));
+				this.postData(resp, this.sucLogin(0, appid+"_"+userName, "123456", null, 1, Integer.valueOf(appid)));
 			}else {
 				//登录失败
 				LogUtil.error("juliangLogin登录失败 appid："+appid+" js："+js);
@@ -720,7 +928,7 @@ public class LoginServlet extends BaseServlet {
 			return;
 		}
 		
-		if(appid.equals("5")){ 	//大唐诛仙
+		if(appid.equals("5") || appid.equals("6")){ 	//大唐诛仙
 
 			String userName = req.getParameter("userName");
 			String token = req.getParameter("token");
@@ -746,7 +954,7 @@ public class LoginServlet extends BaseServlet {
 			String js = HttpUtil.sendGet(url, param.toString());
 			if(js.equals("0")){
 				
-				this.postData(resp, this.sucLogin(0, userName, "123456", null, 1, Integer.valueOf(appid)));
+				this.postData(resp, this.sucLogin(0, appid+"_"+userName, "123456", null, 1, Integer.valueOf(appid)));
 			}else {
 				//登录失败
 				LogUtil.error("qljLogin登录失败 appid："+appid+" js："+js);
@@ -801,6 +1009,94 @@ public class LoginServlet extends BaseServlet {
 				//登录失败
 				LogUtil.error("登录失败  js："+js);
 				
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+			}
+		}else if(appid.equals("6033")){ 	//大唐诛仙ios
+			String uid = req.getParameter("userId");
+			String token = req.getParameter("token");
+			if(uid == null || token == null){
+				//登录失败
+				LogUtil.error("登录失败  appid："+appid);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+				return;
+			}
+			
+			String url = "https://dyhapi.91yydy.com/api/v7/cp/user/check";
+			
+			String app_key = "0aa1dd0a4a1a34ccc7325e650587c36b";
+			
+			StringBuilder param = new StringBuilder();
+			param.append("?");
+			param.append("app_id="+appid);
+			param.append("&mem_id="+uid);
+			param.append("&user_token="+token);
+			String sign = MD5Service.encryptToLowerString("app_id="+appid+"&mem_id="+uid+"&user_token="+token+"&app_key="+app_key);
+			param.append("&sign"+sign);
+			
+			String js = HttpUtil.httpsRequest(url, param.toString(), "application/x-www-form-urlencoded");
+			JSONObject resultJson = new JSONObject(js);
+			if(resultJson.getString("status").equals("0")){
+				
+				this.postData(resp, this.sucLogin(0, appid+"_"+uid, "123456", null, 1, Integer.valueOf(appid)));
+			}else{
+				//登录失败
+				LogUtil.error("登录失败  js："+js);
+				
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+			}
+		}
+	}
+	
+	
+	/**
+	 * 爱乐-爱乐登录
+	 */
+	private void aileLogin(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException, Exception {
+		JSONObject result = new JSONObject();
+		
+		String appid = req.getParameter("appid");
+		if(appid == null){
+			//登录失败
+			LogUtil.error("aileLogin appid："+appid);
+			result.put("result", 6);
+			this.postData(resp, result.toString());
+			return;
+		}
+		
+		if(appid.equals("1") || appid.equals("2")){ 	//赤影江湖
+
+			String userName = req.getParameter("userName");
+			String token = req.getParameter("token");
+			String sdk = req.getParameter("time");
+			String app = req.getParameter("passWord");
+			
+			if(userName == null || token == null || sdk == null || app == null){
+				//登录失败
+				LogUtil.error("aileLogin登录失败  appid："+appid);
+				result.put("result", 6);
+				this.postData(resp, result.toString());
+				return;
+			}
+			
+			String url = "http://sync.1sdk.cn/login/check.html";
+			
+			StringBuilder param = new StringBuilder();
+			param.append("sdk="+sdk);
+			param.append("&app="+app);
+			param.append("&uin="+GetEncode(userName));
+			param.append("&sess="+GetEncode(token));
+			
+			String js = HttpUtil.sendGet(url, param.toString());
+			if(js.equals("0")){
+				
+				this.postData(resp, this.sucLogin(0, appid+"_"+userName, "123456", null, 1, Integer.valueOf(appid)));
+			}else {
+				//登录失败
+				LogUtil.error("aileLogin登录失败 appid："+appid+" js："+js);
 				result.put("result", 6);
 				this.postData(resp, result.toString());
 			}

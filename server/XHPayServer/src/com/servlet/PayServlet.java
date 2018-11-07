@@ -40,6 +40,7 @@ import com.domain.config.BaseServerConfig;
 import com.service.IBaseDataService;
 import com.service.IPayService;
 import com.util.HttpUtil;
+import com.util.LetangPayOrder;
 import com.util.LogUtil;
 import com.util.NetworkUtil;
 import com.util.PayCommonUtil;
@@ -113,6 +114,9 @@ public class PayServlet extends AbstractServlet {
 			}else if(Config.AGENT.equals("yaya")){
 				//中富-吖呀
 				this.yayaPay(req, resp);
+			}else if(Config.AGENT.equals("aile")){
+				//爱乐
+				this.ailePay(req, resp);
 			}
 		} catch (Exception e) {
 			LogUtil.error(e);
@@ -562,24 +566,27 @@ public class PayServlet extends AbstractServlet {
 						if(appid == null){
 							appid = req.getParameter("app_id");
 							if(appid == null){
-								IBaseDataService baseDataService = GCCContext.getInstance().getServiceCollection().getBaseDataService();
-								
-								BaseAgentConfig baseAgentConfig = baseDataService.getBaseAgentConfig(Config.AGENT);
-								if (baseAgentConfig == null){
-									LogUtil.error("运营商="+Config.AGENT+" appid="+appid+"  游戏运营商不存在");
-									return;
-								}
-								
-								String userName = req.getParameter("Account"); //大唐修仙传
-								if(userName == null){
-									userName = req.getParameter("userId"); //焚天决
-								}
-								if(userName != null){
-									try {
-										appid = HttpUtil.httpsRequest(baseAgentConfig.getAccountUrl() + PathConstant.APPID, "userName="+userName, "application/x-www-form-urlencoded");
-									} catch (Exception e) {
-										LogUtil.error("获取登录appid异常：", e);
+								appid = req.getParameter("app_ext1");
+								if(appid == null){
+									IBaseDataService baseDataService = GCCContext.getInstance().getServiceCollection().getBaseDataService();
+									
+									BaseAgentConfig baseAgentConfig = baseDataService.getBaseAgentConfig(Config.AGENT);
+									if (baseAgentConfig == null){
+										LogUtil.error("运营商="+Config.AGENT+" appid="+appid+"  游戏运营商不存在");
 										return;
+									}
+									
+									String userName = req.getParameter("Account"); //大唐修仙传
+									if(userName == null){
+										userName = req.getParameter("userId"); //焚天决
+									}
+									if(userName != null){
+										try {
+											appid = HttpUtil.httpsRequest(baseAgentConfig.getAccountUrl() + PathConstant.APPID, "userName="+userName, "application/x-www-form-urlencoded");
+										} catch (Exception e) {
+											LogUtil.error("获取登录appid异常：", e);
+											return;
+										}
 									}
 								}
 							}
@@ -589,7 +596,7 @@ public class PayServlet extends AbstractServlet {
 				}
 			}
 			if(appid != null){
-				if(appid.equals("1271")){ //仙剑长安
+				if(appid.equals("1271") || appid.equals("1306")){ 	//仙剑长安 神都幽游录
 					String amount = req.getParameter("amount"); //充值金额（人民币元）
 					String charid = req.getParameter("charid"); //角色ID
 					String cporderid = req.getParameter("cporderid"); //cp的订单号
@@ -602,6 +609,10 @@ public class PayServlet extends AbstractServlet {
 					String sign = req.getParameter("sign"); //签名
 					
 					String Pay_Key = "fbb289d1e994d7706ceb105111b920de";
+					if(appid.equals("1306")){
+						Pay_Key = "e8db3a479f243526624eb25a23fd1d0c";
+					}
+					
 					String code = String.format("amount=%s&appid=%s&charid=%s&cporderid=%s&extinfo=%s&gold=%s&orderid=%s&serverid=%s&time=%s&uid=%s%s",
 							GetEncode(amount), GetEncode(appid), GetEncode(charid), GetEncode(cporderid),
 							GetEncode(extinfo), GetEncode(gold), GetEncode(orderid), GetEncode(serverid),
@@ -624,9 +635,10 @@ public class PayServlet extends AbstractServlet {
 			        }else{
 			        	this.postData(resp, "ERROR");
 			        }
-				}else if(appid.equals("324") || appid.equals("53")
+				}else if(appid.equals("324") || appid.equals("53") 
 						|| appid.equals("106") || appid.equals("323")
-						|| appid.equals("325")){ //百转修仙  幻域修仙 仙道至尊 仙侠大劫主 修仙道主
+						|| appid.equals("325") || appid.equals("252")
+						|| appid.equals("255") || appid.equals("254")){ //百转修仙  幻域修仙 仙道至尊 仙侠大劫主 修仙道主 侣仙道 仙语双灵 御仙传说
 					 
 					String at = req.getParameter("at"); //时间搓
 					String cbi = req.getParameter("cbi"); //支付信息
@@ -675,6 +687,12 @@ public class PayServlet extends AbstractServlet {
 						payKey = "7248df52fa054e3693499d694e17674e";
 					}else if(appid.equals("325")){
 						payKey = "a98a2616080a4f8b90a1d7c76217a57d";
+					}else if(appid.equals("252")){
+						payKey = "59771cdc26c640c4ad68f93e7db77b0e";
+					}else if(appid.equals("255")){
+						payKey = "eef560494f3149b4a592e271a19442e5";
+					}else if(appid.equals("254")){
+						payKey = "f198e252c155481f8365c28c8db68643";
 					}
 					
 					String mdsign = MD5Service.encryptToLowerString(preStr + payKey);
@@ -827,7 +845,8 @@ public class PayServlet extends AbstractServlet {
 				}else if(appid.equals("6327") || appid.equals("6328") 
 						|| appid.equals("6333") || appid.equals("6010")
 						|| appid.equals("6089") || appid.equals("6094")
-						|| appid.equals("6095")){ //太古封神 太古伏魔录 武动九州 仙侠幻梦录 隋唐修仙传  逍遥仙途 修仙侠隐
+						|| appid.equals("6095") || appid.equals("6059")
+						|| appid.equals("6097") || appid.equals("6060")){ //太古封神 太古伏魔录 武动九州 仙侠幻梦录 隋唐修仙传 逍遥仙途 修仙侠隐 八荒诛仙录  一剑封天 太古星辰诀
 					
 					String cp_order_id = req.getParameter("cp_order_id"); //cp平台订单号
 					String mem_id = req.getParameter("mem_id"); //玩家ID
@@ -854,6 +873,12 @@ public class PayServlet extends AbstractServlet {
 						app_key = "1093cacfbd5c8be8e5ab6e7c7f2ee2dd";
 					}else if(appid.equals("6095")){
 						app_key = "ca8c3511907b7937161660d5dfdfa551";
+					}else if(appid.equals("6059")){
+						app_key = "504d911f2dec15ca7155a778ba411347";
+					}else if(appid.equals("6097")){
+						app_key = "531b7325198ca6f9d1e714aeee7432bb";
+					}else if(appid.equals("6060")){
+						app_key = "706363bd51e34ef431301946d5b55aac";
 					}
 					
 					String code = String.format("app_id=%s&cp_order_id=%s&mem_id=%s&order_id=%s&order_status=%s&pay_time=%s&product_id=%s&product_name=%s&product_price=%s&app_key=%s",
@@ -863,8 +888,6 @@ public class PayServlet extends AbstractServlet {
 					
 					String md5 = getMD5(code);
 					
-					System.out.println(code);
-					System.out.println("md5sign="+md5);
 			        //签名失败
 			        if(!md5.equalsIgnoreCase(sign))
 			        {
@@ -913,12 +936,99 @@ public class PayServlet extends AbstractServlet {
 			        	this.postData(resp, "FAIL"); //因为他们除了0   其他都会继续回调
 			        }
 					
+				}else if(appid.equals("2250")){ //斗破仙剑
+					String orderid = req.getParameter("orderid"); //订单号
+					String username = req.getParameter("username"); //登录账号
+					String roleid = req.getParameter("roleid"); //游戏角色 ID
+					String serverid = req.getParameter("serverid"); //服务器 ID
+					String amount = req.getParameter("amount");     //成功充值金额，单位(元)
+					String paytime = req.getParameter("paytime"); //玩家充值时间
+					String attach = req.getParameter("attach"); //商户拓展参数
+					String productname = req.getParameter("productname"); //商品描述
+					String sign = req.getParameter("sign"); //签名
+					
+					String Pay_Key = "897d1a827f507946f150fd23ef951f27";
+					String code = String.format("orderid=%s&username=%s&appid=%s&roleid=%s&serverid=%s&amount=%s&paytime=%s&attach=%s&productname=%s&appkey=%s",
+							GetEncode(orderid), GetEncode(username), GetEncode(appid), GetEncode(roleid),
+							GetEncode(serverid), GetEncode(amount), GetEncode(paytime), GetEncode(attach),
+			                GetEncode(productname), Pay_Key);
+
+					String md5 = getMD5(code);
+
+			        //签名失败
+			        if(!md5.equals(sign))
+			        {
+						//签名不正确
+			        	LogUtil.error("中富运营支付  签名不正确 appid="+appid);
+						this.postData(resp, "errorSign");
+						return;
+			        }
+			        
+			        int rs = this.sucPay(GetDecode(attach), appid, Double.valueOf(amount).intValue(), orderid, null, reqUrl);
+			        if(rs == 0){
+			        	this.postData(resp, "success");
+			        }else{
+			        	this.postData(resp, "error");
+			        }
+				}else if(appid.equals("17")){ //古剑诛仙
+					String serial  = req.getParameter("serial"); //订单号
+					String amount   = req.getParameter("amount"); //充值金额,单位为元
+					String status  = req.getParameter("status"); //消费订单的状态。unpaid 标识尚未支付, success 标识已经支付完成
+					String app_order_id = req.getParameter("app_order_id"); //游戏的订单号
+					String app_user_id = req.getParameter("app_user_id");     //应用游戏的用户标识。 
+					String app_subject = req.getParameter("app_subject"); //订单名称。
+					String app_description = req.getParameter("app_description"); //订单描述。
+					String app_ext2  = req.getParameter("app_ext2"); //额外参数2
+					String sign = req.getParameter("sign"); //签名
+					
+					if(!status.equals("success")){
+						this.postData(resp, "fail");
+						return;
+					}
+					
+					Map<String, String> params = new HashMap<String, String>();
+					params.put("serial", serial);
+					params.put("amount", amount);
+					params.put("status", status);
+					params.put("app_order_id", app_order_id);
+					params.put("app_user_id", app_user_id);
+					params.put("app_subject", app_subject);
+					params.put("app_description", app_description);
+					params.put("app_ext1", appid);
+					params.put("app_ext2", app_ext2);
+					
+					List<String> keys = new ArrayList<String>(params.keySet());
+					Collections.sort(keys);
+					
+					String preStr = new String();
+					for(String key : keys){
+						preStr += String.format("%s=%s&", key, params.get(key));
+					}
+					preStr = preStr.substring(0, preStr.length() - 1);
+					
+					String client_secret = "5b78597771d074a6ed7651d884a48566";
+					String mdsign = MD5Service.encryptToLowerString(preStr + "&client_secret="+client_secret);
+					
+			        //签名失败
+			        if(!mdsign.equalsIgnoreCase(sign))
+			        {
+			        	LogUtil.error("中富运营支付  签名不正确 appid="+appid);
+						this.postData(resp, "fail");
+						return;
+			        }
+			        
+			        int rs = this.sucPay(app_ext2, appid, Double.valueOf(amount).intValue(), serial, app_order_id, reqUrl);
+			        if(rs == 0){
+			        	this.postData(resp, "success");
+			        }else{
+			        	this.postData(resp, "fail"); 
+			        }
 				}else{
 					LogUtil.error("中富运营支付  appid不存在： "+appid);
 				}
 			}else{
 				String nt_data  = req.getParameter("nt_data"); //快接数据
-				if(nt_data != null){    //古剑苍穹 九州剑雨  太古仙盟 天剑侠客 天之剑
+				if(nt_data != null){    //古剑苍穹 九州剑雨  太古仙盟 天剑侠客 天之剑  九天剑侠 万古剑魂
 					String sign  = req.getParameter("sign"); //签名
 					String md5Sign = req.getParameter("md5Sign"); //签名
 					
@@ -983,12 +1093,35 @@ public class PayServlet extends AbstractServlet {
 					}
 					
 					if(xmlJSONObj == null || xmlJSONObj.toString().equals("{}")){
+						md5key = "13273393582146824470090910797628";
+						appid = "19";
+						
+						try {
+							String str = QuickSDKUtil.decode(nt_data, "44395002029965378855562081978692");
+							xmlJSONObj = XML.toJSONObject(str);
+						} catch (Exception e1) {
+							
+						}
+					}
+					
+					if(xmlJSONObj == null || xmlJSONObj.toString().equals("{}")){
+						md5key = "38695718343012311188930147902805";
+						appid = "20";
+						
+						try {
+							String str = QuickSDKUtil.decode(nt_data, "37966702352476930977674220676580");
+							xmlJSONObj = XML.toJSONObject(str);
+						} catch (Exception e1) {
+							
+						}
+					}
+					
+					if(xmlJSONObj == null || xmlJSONObj.toString().equals("{}")){
 				     	LogUtil.error("中富运营支付  xmlJSONObj不正确   xmlJSONObj="+xmlJSONObj);
 						this.postData(resp, "SUCCESS");
 						return;	
 					}
 					
-					System.out.println("xmlJSONObj="+xmlJSONObj.toString());
 					String mdsign = MD5Service.encryptToLowerString(nt_data + sign + md5key);
 			        //签名失败
 			        if(!mdsign.equalsIgnoreCase(md5Sign))
@@ -1004,7 +1137,7 @@ public class PayServlet extends AbstractServlet {
 			        String amount = js.getString("amount"); //用户支付金额
 			        String extras_params = js.getString("extras_params"); //支付信息
 			        
-			        int rs = this.sucPay(extras_params, appid, Double.valueOf(amount).intValue(), order_no, out_order_no, null);
+			        int rs = this.sucPay(extras_params, appid, Double.valueOf(amount).intValue(), order_no, out_order_no, js.toString());
 			        if(rs == 0){
 			        	this.postData(resp, "SUCCESS");
 			        }else{
@@ -1012,7 +1145,112 @@ public class PayServlet extends AbstractServlet {
 			        }
 			        
 				}else{
-					LogUtil.error("中富运营支付  appid有误 "+appid);
+					String orderId  = req.getParameter("orderId"); //大唐诛仙记
+					if(orderId != null){
+						String uid = req.getParameter("uid"); //UID标识
+						String amount = req.getParameter("amount"); //充值订单金额
+						String serverId = req.getParameter("serverId"); //充值服务器ID
+						String extraInfo = req.getParameter("extraInfo"); //支付信息
+						String test = req.getParameter("test"); //测试标识
+						String orderTime = req.getParameter("orderTime");     //下单时间
+						String billno = req.getParameter("billno"); // cp平台订单号
+						String sign = req.getParameter("sign"); //签名
+						
+						appid = "200005";
+						String paykey = "8908d5fc691a6a9a90c9c411a0be54ef";
+						
+						String mdsign = MD5Service.encryptToLowerString(orderId+uid+serverId+amount+extraInfo+orderTime+billno+test+paykey);
+				        //签名失败
+				        if(!mdsign.equalsIgnoreCase(sign))
+				        {
+				        	LogUtil.error("中富运营支付  签名不正确 appid="+appid);
+							this.postData(resp, "sign");
+							return;
+				        }
+				        
+				        int rs = this.sucPay(extraInfo, appid, Double.valueOf(amount).intValue(), orderId, billno, reqUrl);
+				        if(rs == 0){
+				        	this.postData(resp, "success");
+				        }else{
+				        	this.postData(resp, "fail");
+				        }
+					}else{
+						String data = req.getParameter("data"); //凡人问道 古剑轩辕
+						if(data != null){
+							JSONObject paramJsion = new JSONObject(data);
+							
+							String uid = paramJsion.getString("uid");
+							String game_trade_no = paramJsion.getString("game_trade_no"); //cp的订单号
+							String out_trade_no = paramJsion.getString("out_trade_no");   //运营商的订单号
+							String trade_status = paramJsion.getString("trade_status");
+							String time = paramJsion.getString("time");
+							String price = paramJsion.getString("price");
+							String pay = paramJsion.getString("pay");
+							String sign = paramJsion.getString("sign");
+							
+							if(uid == null || game_trade_no == null || out_trade_no == null || trade_status == null || time == null 
+									|| price == null || pay == null || sign == null){
+								//参数有误
+								this.postData(resp, "failure");
+								return;
+							}
+							
+							String content = game_trade_no.split("@")[1];
+							if(content == null){
+								//参数有误
+								this.postData(resp, "failure");
+								return;
+							}
+							
+							String pay_key = "192006250b4c09247ec02edce69f6a2d";
+							
+							StringBuilder param = new StringBuilder();
+							param.append("uid="+uid);
+							param.append("&game_trade_no="+game_trade_no);
+							param.append("&out_trade_no="+out_trade_no);
+							param.append("&price="+price);
+							param.append("&trade_status="+trade_status);
+							param.append("&time="+time);
+							param.append("&pay="+pay);
+							param.append("&key="+pay_key);
+							
+							String mySign = MD5Service.encryptToLowerString(param.toString());
+							
+							if(mySign.equalsIgnoreCase(sign)){
+								if(trade_status.equals("TRADE_SUCCESS")){
+							        int rs = this.sucPay(content, "0", Integer.valueOf(price), out_trade_no, null, reqUrl);
+							        if(rs == 0){
+							        	this.postData(resp, "success");
+							        }else{
+							        	this.postData(resp, "failure");
+							        }
+								}
+							}else{
+								//签名不正确
+								this.postData(resp, "failure");
+								LogUtil.error("云游运营支付  签名不正确");
+							}
+						}else{
+							LetangPayOrder model = LetangPayOrder.createPayOrder(req);
+							if(model != null){
+								String ltOrderId = model.getOrderId();
+								String productId = model.getProductId();
+								String productAtm = model.getProductAtm();
+								String orderType = model.getOrderType();
+								String extra = model.getExtra();
+								
+						        int rs = this.sucPay(extra, appid, Double.valueOf(productAtm).intValue(), ltOrderId, null, reqUrl);
+						        if(rs == 0){
+						        	this.postData(resp, "CYSuccess");
+						        }else{
+						        	this.postData(resp, "fail");
+						        }
+								
+							}else{
+								LogUtil.error("中富运营支付  appid有误 "+appid);
+							}
+						}
+					}				
 				}
 			}
 		}
@@ -1150,10 +1388,7 @@ public class PayServlet extends AbstractServlet {
 			
 			String appid = "5";
 			String payKey = "D7TE155GQHEBY380VK1HUOBSJD4MPA2S";
-//			if(app.equals("9B6403A0C0DE0D67")){
-//				payKey = "TQWA7SHLXQWWQALQCBVNWCVTZI34BKK6";
-//				appid = "6";
-//			}
+
 			String mdsign = MD5Service.encryptToLowerString(preStr + payKey);
 			
 	        //签名失败
@@ -1197,61 +1432,181 @@ public class PayServlet extends AbstractServlet {
 		if(reqUrl == null) return;
 		
 		synchronized (reqUrl) {
-			String nt_data  = req.getParameter("nt_data"); //快接数据
-			if(nt_data != null){    //古剑苍穹 九州剑雨  太古仙盟 天剑侠客 天之剑
-				String sign  = req.getParameter("sign"); //签名
-				String md5Sign = req.getParameter("md5Sign"); //签名
-			
-				//这里很尴尬  给的参数区分不了不同包   只能一个一个解析了
-				JSONObject xmlJSONObj = null;
-				String md5key = "qzdhkhjrrubsgkramrvhapawv9mlasga";
-				String appid = "7";
-				
-				try {
-					String str = QuickSDKUtil.decode(nt_data, "93488144117701159093919830544003");
-					xmlJSONObj = XML.toJSONObject(str);
-				} catch (Exception e1) {
+			String appid = req.getParameter("app_id");   //大唐诛仙ios
+			if(appid != null){
+				if(appid.equals("6033")){
+					String cp_order_id = req.getParameter("cp_order_id"); //cp平台订单号
+					String mem_id = req.getParameter("mem_id"); //玩家ID
+					String order_id = req.getParameter("order_id"); //平台订单号
+					String order_status = req.getParameter("order_status"); //平台订单状态 1 未支付 2成功支付 3支付失败
+					String pay_time = req.getParameter("pay_time"); //订单下单时间
+					String product_id = req.getParameter("product_id");     //商品id
+					String product_name = req.getParameter("product_name"); // 商品名称
+					String product_price = req.getParameter("product_price"); //商品价格(元);保留两位小数
+					String sign = req.getParameter("sign"); //签名
+					String ext = req.getParameter("ext"); //支付信息
 					
+					String app_key = "0aa1dd0a4a1a34ccc7325e650587c36b";
+					
+					String code = String.format("app_id=%s&cp_order_id=%s&mem_id=%s&order_id=%s&order_status=%s&pay_time=%s&product_id=%s&product_name=%s&product_price=%s&app_key=%s",
+							appid, GetEncode(cp_order_id), mem_id, order_id,
+							order_status, pay_time, GetEncode(product_id), GetEncode(product_name),
+							GetEncode(product_price), app_key);
+					
+					String md5 = getMD5(code);
+					
+			        //签名失败
+			        if(!md5.equalsIgnoreCase(sign))
+			        {
+			        	LogUtil.error("中富-吖呀运营支付  签名不正确 appid="+appid);
+						this.postData(resp, "FAILURE");
+						return;
+			        }
+			        
+			        int rs = this.sucPay(GetDecode(ext), appid, Double.valueOf(product_price).intValue(), order_id, cp_order_id, reqUrl);
+			        if(rs == 0){
+			        	this.postData(resp, "SUCCESS");
+			        }else{
+			        	this.postData(resp, "FAILURE");
+			        }
 				}
+			}else{
+				String nt_data  = req.getParameter("nt_data"); //快接数据
+				if(nt_data != null){    //创誓记
+					String sign  = req.getParameter("sign"); //签名
+					String md5Sign = req.getParameter("md5Sign"); //签名
 				
-				if(xmlJSONObj == null || xmlJSONObj.toString().equals("{}")){
-			     	LogUtil.error("中富-吖呀 运营支付  xmlJSONObj不正确   xmlJSONObj="+xmlJSONObj);
-					this.postData(resp, "SUCCESS");
-					return;	
+					//这里很尴尬  给的参数区分不了不同包   只能一个一个解析了
+					JSONObject xmlJSONObj = null;
+					String md5key = "qzdhkhjrrubsgkramrvhapawv9mlasga";
+					appid = "7";
+					
+					try {
+						String str = QuickSDKUtil.decode(nt_data, "93488144117701159093919830544003");
+						xmlJSONObj = XML.toJSONObject(str);
+					} catch (Exception e1) {
+						
+					}
+					
+					if(xmlJSONObj == null || xmlJSONObj.toString().equals("{}")){
+				     	LogUtil.error("中富-吖呀 运营支付  xmlJSONObj不正确   xmlJSONObj="+xmlJSONObj);
+						this.postData(resp, "SUCCESS");
+						return;	
+					}
+					
+					String mdsign = MD5Service.encryptToLowerString(nt_data + sign + md5key);
+			        //签名失败
+			        if(!mdsign.equalsIgnoreCase(md5Sign))
+			        {
+			        	LogUtil.error("中富-吖呀运营支付  签名不正确 appid="+appid);
+						this.postData(resp, "SUCCESS");
+						return;
+			        }
+			        
+			        JSONObject js = xmlJSONObj.getJSONObject("quicksdk_message").getJSONObject("message");
+//			        String is_test = js.getString("is_test"); //是否为测试订单
+//			        String channel = js.getString("channel"); //渠道标示ID
+//			        String channel_uid = js.getString("channel_uid"); //渠道用户唯一标示
+			        String game_order = js.getString("game_order"); //cp订单号
+			        String order_no = js.getString("order_no"); //QuickSDK唯一订单号
+//			        String pay_time = js.getString("pay_time"); //支付时间 
+			        String amount = js.getString("amount"); //用户支付金额
+			        String status = js.getString("status"); //充值状态:0成功, 1失败(为1时 应返回FAILED失败)
+			        String extras_params = js.getString("extras_params"); //支付信息
+			        
+			        if(!status.equals("0")){
+			        	this.postData(resp, "FAILED");
+			        	return;
+			        }
+			        int rs = this.sucPay(extras_params, appid, Double.valueOf(amount).intValue(), order_no, game_order, js.toString());
+			        if(rs == 0){
+			        	this.postData(resp, "SUCCESS");
+			        }else{
+			        	this.postData(resp, "SUCCESS");
+			        }
 				}
-				
-				String mdsign = MD5Service.encryptToLowerString(nt_data + sign + md5key);
-		        //签名失败
-		        if(!mdsign.equalsIgnoreCase(md5Sign))
-		        {
-		        	LogUtil.error("中富-吖呀运营支付  签名不正确 appid="+appid);
-					this.postData(resp, "SUCCESS");
-					return;
-		        }
-		        
-		        JSONObject js = xmlJSONObj.getJSONObject("quicksdk_message").getJSONObject("message");
-//		        String is_test = js.getString("is_test"); //是否为测试订单
-//		        String channel = js.getString("channel"); //渠道标示ID
-//		        String channel_uid = js.getString("channel_uid"); //渠道用户唯一标示
-		        String game_order = js.getString("game_order"); //cp订单号
-		        String order_no = js.getString("order_no"); //QuickSDK唯一订单号
-//		        String pay_time = js.getString("pay_time"); //支付时间 
-		        String amount = js.getString("amount"); //用户支付金额
-		        String status = js.getString("status"); //充值状态:0成功, 1失败(为1时 应返回FAILED失败)
-		        String extras_params = js.getString("extras_params"); //支付信息
-		        
-		        if(!status.equals("0")){
-		        	this.postData(resp, "FAILED");
-		        	return;
-		        }
-		        int rs = this.sucPay(extras_params, appid, Double.valueOf(amount).intValue(), order_no, game_order, js.toString());
-		        if(rs == 0){
-		        	this.postData(resp, "SUCCESS");
-		        }else{
-		        	this.postData(resp, "SUCCESS");
-		        }
 			}
+
 		}
+	}
+	
+	
+	/**
+	 * 爱乐支付回调
+	 */
+	private void ailePay(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, Exception {
+		
+		String reqUrl = req.getQueryString();
+		
+		System.out.println("reqUrl:  "+reqUrl);
+		
+		if(reqUrl == null) return;
+		
+		synchronized (reqUrl) {
+			String app = req.getParameter("app"); //十六进制字符串形式的应用 ID
+			String cbi = req.getParameter("cbi"); //支付信息 
+			String ct = req.getParameter("ct"); //支付完成时间
+			String fee = req.getParameter("fee"); //金额（分）
+			String pt = req.getParameter("pt"); //付费时间
+			String sdk = req.getParameter("sdk");     //渠道在易接服务器的 ID
+			String ssid = req.getParameter("ssid"); // cp订单号
+			String st = req.getParameter("st"); //是否支付成功标志， 1 标示支付成功
+			String tcd = req.getParameter("tcd"); //订单在易接服务器上的订单号
+			String uid = req.getParameter("uid"); //渠道平台上的唯一标记
+			String ver = req.getParameter("ver"); //协议版本号
+			String sign = req.getParameter("sign"); //签名
+			
+			
+			Map<String, String> params = new HashMap<String, String>();
+			params.put("app", app);
+			params.put("cbi", cbi);
+			params.put("ct", ct);
+			params.put("fee", fee);
+			params.put("pt", pt);
+			params.put("sdk", sdk);
+			params.put("ssid", ssid);
+			params.put("st", st);
+			params.put("tcd", tcd);
+			params.put("uid", uid);
+			params.put("ver", ver);
+			
+			List<String> keys = new ArrayList<String>(params.keySet());
+			Collections.sort(keys);
+			
+			String preStr = new String();
+			for(String key : keys){
+				preStr += String.format("%s=%s&", key, params.get(key));
+			}
+			preStr = preStr.substring(0, preStr.length() - 1);
+			
+			String appid = "1";
+			String payKey = "KRSFAAB8IDZTZ3H3ZGCR1AUD67Z0QXDA";
+
+			String mdsign = MD5Service.encryptToLowerString(preStr + payKey);
+			
+	        //签名失败
+	        if(!mdsign.equalsIgnoreCase(sign))
+	        {
+	        	LogUtil.error("爱乐运营支付  签名不正确 appid="+appid);
+				this.postData(resp, "FAILURE");
+				return;
+	        }
+	        
+	        
+			if(!st.equals("1")){
+		       	LogUtil.error("爱乐运营支付  支付不成功 appid="+appid+" st="+st);
+				this.postData(resp, "FAILURE");
+				return;
+			}
+			
+	        int rs = this.sucPay(cbi, appid, Integer.valueOf(fee) / 100, tcd, null, reqUrl);
+	        if(rs == 0){
+	        	this.postData(resp, "SUCCESS");
+	        }else{
+	        	this.postData(resp, "FAILURE");
+	        }
+		}
+		
 	}
 	
 	/**

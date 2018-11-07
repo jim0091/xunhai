@@ -6,7 +6,7 @@ package  com.cc.core.conf
         public static var assets:String = "";
 		// 14.18.236.140
 		public static var host:String = "47.106.208.235";
-		public static var port:int = 9200;
+		public static var port:int = 9207;
 		
 		public static var width:int = 1280;
 		public static var height:int = 800;
